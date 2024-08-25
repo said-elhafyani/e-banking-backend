@@ -1,8 +1,7 @@
 package org.sid.ebankingbackend.web;
 
-import org.sid.ebankingbackend.dtos.AccountHistoryDTO;
-import org.sid.ebankingbackend.dtos.AccountOperationDTO;
-import org.sid.ebankingbackend.dtos.BankAccountDTO;
+import org.sid.ebankingbackend.dtos.*;
+import org.sid.ebankingbackend.exceptions.BalanceNotSufficientException;
 import org.sid.ebankingbackend.exceptions.BankAccountNotFoundException;
 import org.sid.ebankingbackend.services.BankAccountService;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +11,7 @@ import java.util.List;
 @RestController
 @CrossOrigin("*")
 public class BankAccountRestAPI {
+
     private BankAccountService bankAccountService;
 
     public BankAccountRestAPI(BankAccountService bankAccountService) {
@@ -38,6 +38,21 @@ public class BankAccountRestAPI {
                                                   @RequestParam(name = "page",defaultValue = "0") int page,
                                                   @RequestParam(name = "size",defaultValue = "5") int size) throws BankAccountNotFoundException {
         return bankAccountService.getAccountHistory(id,page,size);
+    }
+
+    @PostMapping("/accounts/debit")
+   public void debit(@RequestBody DebitDTO debitDTO) throws BankAccountNotFoundException, BalanceNotSufficientException {
+        bankAccountService.debit(debitDTO.getAmount(),debitDTO.getAccountId(),debitDTO.getDescription());
+    }
+
+    @PostMapping("/accounts/credits")
+    public void credit(@RequestBody DebitDTO creditDTO) throws BankAccountNotFoundException {
+        bankAccountService.credit(creditDTO.getAmount(),creditDTO.getAccountId(),creditDTO.getDescription());
+    }
+
+    @PostMapping("/accounts/transfer")
+    public void transfer(@RequestBody TransferRequestDTO transferRequestDTO) throws BankAccountNotFoundException, BalanceNotSufficientException {
+        bankAccountService.transfer(transferRequestDTO.getAmount(),transferRequestDTO.getAccountSource(),transferRequestDTO.getAccountDestination());
     }
 
 

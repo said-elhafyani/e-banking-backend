@@ -128,7 +128,7 @@ public class BankAccoutServiceImpl implements BankAccountService{
     }
 
     @Override
-    public void debit(double amount, String accountCode, String description) throws BankAccountNotFoundException, BalanceNotSufficientException {
+    public DebitDTO debit(double amount, String accountCode, String description) throws BankAccountNotFoundException, BalanceNotSufficientException {
         BankAccount bankAccount = bankAccountRepository.findById(accountCode).orElseThrow(()->new BankAccountNotFoundException("bank account not found"));
         if(bankAccount.getBalance() < amount) {
             // exception for insufficient balance (exception metier)
@@ -143,10 +143,11 @@ public class BankAccoutServiceImpl implements BankAccountService{
         accountOperationRepository.save(accountOperation);
         bankAccount.setBalance(bankAccount.getBalance() - amount);
         bankAccountRepository.save(bankAccount);
+        return null;
     }
 
     @Override
-    public void credit(double amount, String accountCode, String description) throws BankAccountNotFoundException {
+    public DebitDTO credit(double amount, String accountCode, String description) throws BankAccountNotFoundException {
         BankAccount bankAccount = bankAccountRepository.findById(accountCode).orElseThrow(()->new BankAccountNotFoundException("bank account not found"));
         AccountOperation accountOperation = new AccountOperation();
         accountOperation.setBankAccount(bankAccount);
@@ -155,8 +156,9 @@ public class BankAccoutServiceImpl implements BankAccountService{
         accountOperation.setOperationDate(new Date());
         accountOperation.setDescription(description);
         accountOperationRepository.save(accountOperation);
-        bankAccount.setBalance(bankAccount.getBalance() - amount);
+        bankAccount.setBalance(bankAccount.getBalance() + amount);
         bankAccountRepository.save(bankAccount);
+        return null;
     }
 
     @Override
@@ -178,7 +180,7 @@ public class BankAccoutServiceImpl implements BankAccountService{
             // exception for bank account not found (exception métier)
             throw new BankAccountNotFoundException("bank account not found");
         }
-       Page<AccountOperation> accountOperations = accountOperationRepository.findByBankAccount_Id(id, PageRequest.of(page, size));
+       Page<AccountOperation> accountOperations = accountOperationRepository.findByBankAccount_IdOrderByOperationDateDesc(id, PageRequest.of(page, size));
        AccountHistoryDTO accountHistoryDTO = new AccountHistoryDTO();
        List<AccountOperationDTO> accountOperationDTOS = accountOperations.getContent().stream().map(op -> bankAccountMapper.fromAccountOperationToAccountOperationDTO(op)).collect(Collectors.toList());
          accountHistoryDTO.setAccountOperationsDTO(accountOperationDTOS);
